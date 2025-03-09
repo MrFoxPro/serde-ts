@@ -64,10 +64,10 @@ fn main() -> Result<(), Box<dyn Error>> {
 		map: HashMap::from_iter([(3, 7)])
 	};
 
-	println!("simple_instance: {:?}", bincode::encode_to_vec(&simple_instance, bincode::config::standard())?);
-	println!("enum_instance: {:?}", bincode::encode_to_vec(&enum_instance, bincode::config::standard())?);
-	println!("unit_variant: {:?}", bincode::encode_to_vec(&unit_variant, bincode::config::standard())?);
-	println!("complex_instance: {:?}", bincode::encode_to_vec(&complex_instance, bincode::config::standard())?);
+	println!("simple_instance: {:?}", bincode::encode_to_vec(&simple_instance, bincode::config::legacy())?);
+	println!("enum_instance: {:?}", bincode::encode_to_vec(&enum_instance, bincode::config::legacy())?);
+	println!("unit_variant: {:?}", bincode::encode_to_vec(&unit_variant, bincode::config::legacy())?);
+	println!("complex_instance: {:?}", bincode::encode_to_vec(&complex_instance, bincode::config::legacy())?);
 
 	let registry = tracer.registry()?;
 
