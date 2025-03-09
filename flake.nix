@@ -57,7 +57,7 @@
               '';
               # TODO pass output file
               scripts."gen:bincode".exec = let outdir = "suite/generated/bincode"; in fromRoot ''
-                rm -rf ${outdir}; mkdir -p ${outdir}; cp runtime/* ${outdir}/
+                rm -rf ${outdir}; mkdir -p ${outdir}; ln -sf ${root}/runtime/serde.ts ${outdir}/; ln -sf ${root}/runtime/bincode.ts ${outdir}/
                 cargo run -p suite
               '';
               scripts."run:test".exec = fromRoot ''
