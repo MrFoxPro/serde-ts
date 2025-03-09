@@ -7,7 +7,7 @@ name = "suite"
 edition = "2024"
 
 [[bin]]
-path = "./suite/generate.rs"
+path = "./suite/suite.rs"
 name = "suite"
 
 [dependencies]
@@ -17,3 +17,4 @@ serde-generate-ts = { path = "./lib" }
 bincode = { version = "2" }
 serde = { version = "1" }
 serde_json = { version = "1" }
+indoc = { version = "2" }

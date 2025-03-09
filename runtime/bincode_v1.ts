@@ -1,6 +1,6 @@
-import { BinaryReader, BinaryWriter } from "./serde.ts";
+import * as Serde from "./serde.ts";
 
-export class BincodeReader extends BinaryReader {
+export class BinaryReader extends Serde.BinaryReader {
 	read_length() {
 		return Number(this.read_u64())
 	}
@@ -12,7 +12,7 @@ export class BincodeReader extends BinaryReader {
 	}
 }
 
-export class BincodeWriter extends BinaryWriter {
+export class BinaryWriter extends Serde.BinaryWriter {
 	write_length(value: number) {
 		this.write_u64(value)
 	}

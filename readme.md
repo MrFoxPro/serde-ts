@@ -31,7 +31,3 @@ run:suite
 │ 2       │ 'protobuf-js-ts-proto:decode' │ '837,149' │ 1194.5301794026077 │ '±0.18%' │ 1255724 │
 └─────────┴───────────────────────────────┴───────────┴────────────────────┴──────────┴─────────┘
 ```
-
-
-## TODO
-automate generation of binary values from generate.rs

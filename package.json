@@ -1,0 +1,6 @@
+{
+	"name": "@serde-ts/root",
+	"devDependencies": {
+		"@types/node": "^22.13.10"
+	}
+}

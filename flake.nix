@@ -57,21 +57,18 @@
               '';
               # TODO pass output file
               scripts."gen:bincode".exec = let outdir = "suite/generated/bincode"; in fromRoot ''
-                rm -rf ${outdir}; mkdir -p ${outdir}; ln -sf ${root}/runtime/serde.ts ${outdir}/; ln -sf ${root}/runtime/bincode.ts ${outdir}/
+                rm -rf ${outdir}; mkdir -p ${outdir}
                 cargo run -p suite
               '';
               scripts."run:test".exec = fromRoot ''
-                node --experimental-strip-types --no-warnings suite/test.ts
+                node --experimental-strip-types --no-warnings suite/generated/bincode/test.ts
               '';
               scripts."run:benchmarks".exec = fromRoot ''
                 node --experimental-strip-types --no-warnings suite/bench.ts
               '';
               scripts."run:suite".exec = ''
                 set -e
-                gen:bincode
-                gen:proto
-                run:test
-                run:benchmarks
+                gen:bincode && gen:proto && run:test && run:benchmarks
               '';
             };
           };

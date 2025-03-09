@@ -2,24 +2,14 @@
 
 use serde_generate::{indent::{IndentConfig, IndentedWriter}, CodeGeneratorConfig};
 use serde_reflection::{ContainerFormat, Format, Named, Registry, VariantFormat};
-use std::{
-	collections::{BTreeMap, HashMap},
-	io::{Result, Write},
-};
+use std::{collections::BTreeMap, io::{Result, Write}};
 use indoc::formatdoc;
-use heck::{CamelCase, SnakeCase};
+use heck::SnakeCase;
 
 /// Main configuration object for code-generation in TypeScript
 pub struct CodeGenerator<'a> {
 	/// Language-independent configuration.
 	config: &'a CodeGeneratorConfig,
-	/// Mapping from external type names to fully-qualified class names (e.g. "MyClass" -> "com.my_org.my_package.MyClass").
-	/// Derived from `config.external_definitions`.
-	external_qualified_names: HashMap<String, String>,
-	/// vector of namespaces to import
-	namespaces_to_import: Vec<String>,
-	/// root to import from serde.ts and bincode.ts files
-	runtime_root: String,
 }
 
 /// Shared state for the code generation of a TypeScript source file.
@@ -29,24 +19,9 @@ struct TypeScriptEmitter<'a, T> {
 }
 
 impl<'a> CodeGenerator<'a> {
-	pub fn new(config: &'a CodeGeneratorConfig, runtime_root: impl AsRef<str>) -> Self {
+	pub fn new(config: &'a CodeGeneratorConfig) -> Self {
 		if config.c_style_enums { panic!("TypeScript does not support generating c-style enums"); }
-
-		let mut external_qualified_names = HashMap::new();
-		for (namespace, names) in &config.external_definitions {
-			for name in names {
-				external_qualified_names.insert(
-					name.to_string(),
-					format!("{}.{}", namespace.to_camel_case(), name),
-				);
-			}
-		}
-		Self {
-			config,
-			external_qualified_names,
-			namespaces_to_import: config.external_definitions.keys().map(|k| k.to_string()).collect::<Vec<_>>(),
-			runtime_root: runtime_root.as_ref().into(),
-		}
+		Self { config }
 	}
 
 	/// Output class definitions for `registry` in a single source file.
@@ -56,7 +31,7 @@ impl<'a> CodeGenerator<'a> {
 			generator: self,
 		};
 
-		emitter.output_preamble()?;
+		// emitter.output_preamble()?;
 
 		for (name, format) in registry {
 			writeln!(emitter.out)?;
@@ -75,11 +50,6 @@ impl<'a> CodeGenerator<'a> {
 
 impl<'a, T: Write> TypeScriptEmitter<'a, T> {
 	fn output_preamble(&mut self) -> Result<()> {
-		writeln!(self.out, r#"import type * as $t from "{}/serde.ts""#, self.generator.runtime_root)?;
-		writeln!(self.out, r#"import {{ BincodeReader, BincodeWriter }} from "{}/bincode.ts""#, self.generator.runtime_root)?;
-		for namespace in self.generator.namespaces_to_import.iter() {
-			writeln!(self.out, "import * as {} from '../{}/mod.ts';\n", namespace.to_camel_case(), namespace)?;
-		}
 		Ok(())
 	}
 
@@ -88,7 +58,7 @@ impl<'a, T: Write> TypeScriptEmitter<'a, T> {
 		writeln!(self.out, "export const {name} = {{")?;
 		self.out.indent();
 
-		writeln!(self.out, "encode(value: {name}, writer = new BincodeWriter()) {{")?;
+		writeln!(self.out, "encode(value: {name}, writer = new BinaryWriter()) {{")?;
 		self.out.indent();
 
 		match container {
@@ -121,7 +91,7 @@ impl<'a, T: Write> TypeScriptEmitter<'a, T> {
 
 
 		// Decode
-		writeln!(self.out, "decode(input: Uint8Array, reader = new BincodeReader(input)) {{")?;
+		writeln!(self.out, "decode(input: Uint8Array, reader = new BinaryReader(input)) {{")?;
 		self.out.indent();
 
 		match container {
@@ -202,7 +172,7 @@ impl<'a, T: Write> TypeScriptEmitter<'a, T> {
 		self.out.unindent();
 		writeln!(self.out, "}},")?; // encode end
 
-		writeln!(self.out, "decode(input: Uint8Array, reader = new BincodeReader(input)) {{")?;
+		writeln!(self.out, "decode(input: Uint8Array, reader = new BinaryReader(input)) {{")?;
 		self.out.indent();
 
 		writeln!(self.out, r#"let value: {name}"#);
@@ -321,7 +291,8 @@ impl<'a, T: Write> TypeScriptEmitter<'a, T> {
 	}
 
 	fn quote_qualified_name(&self, name: &str) -> String {
-		self.generator.external_qualified_names.get(name).cloned().unwrap_or_else(|| name.to_string())
+		name.to_string()
+		// self.generator.external_qualified_names.get(name).cloned().unwrap_or_else(|| name.to_string())
 	}
 
 	// fn output_comment(&mut self, name: &str) -> std::io::Result<()> {
