@@ -1,0 +1,16 @@
+[package]
+name = "serde-generate-ts"
+version = "0.0.1"
+edition = "2024"
+
+[lib]
+path = "lib.rs"
+
+[dependencies]
+indoc = { version = "2" }
+
+serde-reflection = { git = "https://github.com/mrfoxpro/serde-reflection", branch = "expose-codegen" }
+serde-generate = { git = "https://github.com/mrfoxpro/serde-reflection", branch = "expose-codegen" }
+
+heck = { version = "0.3" }
+textwrap = { version = "0.13" }
