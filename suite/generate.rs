@@ -1,4 +1,4 @@
-use std::{collections::HashMap, error::Error};
+use std::{collections::HashMap, error::Error, fs, io::Write};
 use serde::{Deserialize, Serialize};
 use bincode::{Encode, Decode};
 use serde_reflection::{Registry, Tracer, TracerConfig};
@@ -50,11 +50,11 @@ fn main() -> Result<(), Box<dyn Error>> {
 	tracer.trace_simple_type::<TupleStruct>()?;
 	tracer.trace_simple_type::<ComplexStruct>()?;
 
-	let simple_instance = SimpleStruct { a: 42, b: "Hello".into() };
-	let enum_instance = MultiEnum::VariantC { x: 5, y: 3.14 };
-	let unit_variant = MultiEnum::UnitVariant;
+	let simple_struct = SimpleStruct { a: 42, b: "Hello".into() };
+	let multienum_variantc = MultiEnum::VariantC { x: 5, y: 3.14 };
+	let multienum_unit = MultiEnum::UnitVariant;
 	let complex_instance = ComplexStruct {
-		inner: simple_instance.clone(),
+		inner: simple_struct.clone(),
 		flag: true,
 		items: vec![MultiEnum::VariantA(10), MultiEnum::VariantB("World".into())],
 		unit: UnitStruct,
@@ -64,17 +64,27 @@ fn main() -> Result<(), Box<dyn Error>> {
 		map: HashMap::from_iter([(3, 7)])
 	};
 
-	println!("simple_instance: {:?}", bincode::encode_to_vec(&simple_instance, bincode::config::legacy())?);
-	println!("enum_instance: {:?}", bincode::encode_to_vec(&enum_instance, bincode::config::legacy())?);
-	println!("unit_variant: {:?}", bincode::encode_to_vec(&unit_variant, bincode::config::legacy())?);
-	println!("complex_instance: {:?}", bincode::encode_to_vec(&complex_instance, bincode::config::legacy())?);
-
 	let registry = tracer.registry()?;
+
+	const ROOT: &str = env!("CARGO_MANIFEST_DIR");
+	let mut bin_file = fs::OpenOptions::new().create(true).write(true).open(format!("{ROOT}/suite/generated/bincode/data_bin.ts"))?;
+
+	fn add_bin_def(file: &mut fs::File, name: &'static str, item: impl Encode) -> Result<(), Box<dyn Error>> {
+		let bytes = bincode::encode_to_vec(&item, bincode::config::legacy())?;
+		writeln!(file, "export let {name}_bin = Uint8Array.from({bytes:?})")?;
+		Ok(())
+	}
+
+	add_bin_def(&mut bin_file, "SimpleStruct", simple_struct)?;
+	add_bin_def(&mut bin_file, "MultiEnum_VariantC", multienum_variantc)?;
+	add_bin_def(&mut bin_file, "MultiEnum_Unit", multienum_unit)?;
+	add_bin_def(&mut bin_file, "ComplexStruct", complex_instance)?;
+	std::mem::drop(bin_file);
 
 	let mut source = Vec::new();
 	let config = CodeGeneratorConfig::new("".into()).with_encodings(vec![Encoding::Bincode]);
 	TsCodeGenerator::new(&config, ".").output(&mut source, &registry)?;
-	std::fs::write(format!("{}/suite/generated/bincode/registry.ts", env!("CARGO_MANIFEST_DIR")), source)?;
+	fs::write(format!("{ROOT}/suite/generated/bincode/registry.ts"), source)?;
 
 	Ok(())
 }
