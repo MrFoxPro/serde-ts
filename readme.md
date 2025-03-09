@@ -1,6 +1,8 @@
 This repository contains Serde <-> TypeScript code generator and typescript library for runtime encoding/decoding.
 NOTE: Upstream serde-generate [wasn't properly tested for bincode 2](https://github.com/zefchain/serde-reflection/issues/69), use with caution
 
+Example usage can be found in `suite` dir.
+
 ## JavaScript benchamrks.
 Enter nix development shell and run
 ```sh
