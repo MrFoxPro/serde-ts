@@ -77,7 +77,8 @@ export interface Writer {
 const BIG_32 = 32n, BIG_64 = 64n
 const BIG_32Fs = 429967295n, BIG_64Fs = 18446744073709551615n
 
-let WRITE_HEAP = new DataView(new ArrayBuffer(128))
+export const WRITE_DEFAULT_HEAP_SIZE = 128
+let WRITE_HEAP = new DataView(new ArrayBuffer(WRITE_DEFAULT_HEAP_SIZE))
 
 export abstract class BinaryWriter implements Writer {
 	public static readonly TEXT_ENCODER = new TextEncoder()
@@ -87,7 +88,7 @@ export abstract class BinaryWriter implements Writer {
 
 	constructor() {
 		if (WRITE_HEAP.byteLength > 1024) {
-			this.view = WRITE_HEAP = new DataView(new ArrayBuffer(128))
+			this.view = WRITE_HEAP = new DataView(new ArrayBuffer(WRITE_DEFAULT_HEAP_SIZE))
 		}
 	}
 

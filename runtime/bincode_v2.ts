@@ -7,14 +7,17 @@ const
 	U64_BYTE  = 253, U64_MAX = 18446744073709551615n,
 	U128_BYTE = 254
 
-let WRITE_STRING_BUFFER = new Uint8Array(256)
+
+const WRITE_STRING_BUFFER_DEFAULT_SIZE = 128
+let WRITE_STRING_CACHE = new Uint8Array(WRITE_STRING_BUFFER_DEFAULT_SIZE)
+
 export class BinaryWriter extends Serde.BinaryWriter {
 	// using WRITE_HEAP cache in v2 causes weird runtime error `RangeError: Invalid DataView length 77687102186155120`
 	constructor() {
 		super()
-		this.view = new DataView(new ArrayBuffer(256))
-		if (WRITE_STRING_BUFFER.byteLength > 2048) {
-			WRITE_STRING_BUFFER = new Uint8Array(256)
+		this.view = new DataView(new ArrayBuffer(Serde.WRITE_DEFAULT_HEAP_SIZE))
+		if (WRITE_STRING_CACHE.byteLength > 2048) {
+			WRITE_STRING_CACHE = new Uint8Array(WRITE_STRING_BUFFER_DEFAULT_SIZE)
 		}
 	}
 	override write_length(value: number) {
@@ -82,13 +85,12 @@ export class BinaryWriter extends Serde.BinaryWriter {
 
 	override write_string(value: string) {
 		this.alloc(8 + value.length * 3)
-		let { written: length } = BinaryWriter.TEXT_ENCODER.encodeInto(value, WRITE_STRING_BUFFER)
+		let { written: length } = BinaryWriter.TEXT_ENCODER.encodeInto(value, WRITE_STRING_CACHE)
 		this.write_u64(length)
-		new Uint8Array(this.view.buffer, this.offset).set(WRITE_STRING_BUFFER.subarray(0, length))
+		new Uint8Array(this.view.buffer, this.offset).set(WRITE_STRING_CACHE.subarray(0, length))
 		this.offset += length
 	}
 }
-
 
 export class BinaryReader extends Serde.BinaryReader {
 	override read_length() {
@@ -124,26 +126,26 @@ export class BinaryReader extends Serde.BinaryReader {
 	override read_u128() {
 		let d = super.read_u8()
 		if (d <= SINGLE_BYTE_MAX) return BigInt(d)
-		if (d === U16_BYTE) return BigInt(super.read_u16())
-		if (d === U32_BYTE) return BigInt(super.read_u32())
-		if (d === U64_BYTE) return super.read_u64()
+		if (d === U16_BYTE)  return BigInt(super.read_u16())
+		if (d === U32_BYTE)  return BigInt(super.read_u32())
+		if (d === U64_BYTE)  return super.read_u64()
 		if (d === U128_BYTE) return super.read_u128()
 		throw `invalid discriminant ${d}`
 	}
+
+	transform_signed(n: number) { return n % 2 === 0 ? n / 2 : ~(n >> 1) }
+	transform_signed_big(n: bigint) { return n % 2n === 0n ? n / 2n : ~(n >> 1n) }
+
 	override read_i16() {
-		let n = this.read_u16()
-		return n % 2 === 0 ? n / 2 : ~(n >> 1)
+		return this.transform_signed(this.read_u16())
 	}
 	override read_i32() {
-		let n = this.read_u32()
-		return n % 2 === 0 ? n / 2 : ~(n >> 1)
+		return this.transform_signed(this.read_u32())
 	}
 	override read_i64() {
-		let n = this.read_u64()
-		return n % 2n === 0n ? n / 2n : ~(n >> 1n)
+		return this.transform_signed_big(this.read_u64())
 	}
 	override read_i128() {
-		let n = this.read_u128()
-		return n % 2n === 0n ? n / 2n : ~(n >> 1n)
+		return this.transform_signed_big(this.read_u128())
 	}
 }
