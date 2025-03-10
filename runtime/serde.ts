@@ -249,7 +249,7 @@ export abstract class BinaryReader implements Reader {
 
 	public read_string() {
 		let length = this.read_length()
-		let decoded = BinaryReader.TEXT_DECODER.decode(new Uint8Array(this.view.buffer, this.offset, length))
+		let decoded = BinaryReader.TEXT_DECODER.decode(new DataView(this.view.buffer, this.offset, length))
 		this.offset += length
 		return decoded
 	}

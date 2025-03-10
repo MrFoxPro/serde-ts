@@ -1,8 +1,9 @@
 import { Bench } from "tinybench"
 import * as ProtobufRegistry from "./generated/proto/main.ts"
-import * as BincodeRegistry from "./generated/bincode/registry_v1.ts"
+import * as BincodeRegistryV1 from "./generated/bincode/registry_v1.ts"
+import * as BincodeRegistryV2 from "./generated/bincode/registry_v2.ts"
 
-const ComplexStruct_bc_obj: BincodeRegistry.ComplexStruct = {
+const ComplexStruct_bc_obj: BincodeRegistryV1.ComplexStruct = {
 	inner: { a: 42, b: "Hello" },
 	flag: true,
 	items: [
@@ -32,8 +33,11 @@ const ComplexStruct_pb_obj: ProtobufRegistry.ComplexStruct = {
 await async function bench_encode() {
 	let b = new Bench({ time: 1_500 })
 
-	b.add("serdegen-bincode:encode", () => {
-		BincodeRegistry.ComplexStruct.encode(ComplexStruct_bc_obj)
+	b.add("serdegen-bincode:v1:encode", () => {
+		BincodeRegistryV1.ComplexStruct.encode(ComplexStruct_bc_obj)
+	})
+	b.add("serdegen-bincode:v2:encode", () => {
+		BincodeRegistryV2.ComplexStruct.encode(ComplexStruct_bc_obj)
 	})
 
 	b.add("JSON:encode", () => {
@@ -53,9 +57,14 @@ await async function bench_encode() {
 await async function bench_decode() {
 	let b = new Bench({ time: 1_500 })
 
-	let bincodec_encoded = BincodeRegistry.ComplexStruct.encode(ComplexStruct_bc_obj)
-	b.add("serdegen-bincode:decode", () => {
-		BincodeRegistry.ComplexStruct.decode(bincodec_encoded)
+	let bincodec_encoded_v1 = BincodeRegistryV1.ComplexStruct.encode(ComplexStruct_bc_obj)
+	b.add("serdegen-bincode:v1:decode", () => {
+		BincodeRegistryV1.ComplexStruct.decode(bincodec_encoded_v1)
+	})
+
+	let bincodec_encoded_v2 = BincodeRegistryV2.ComplexStruct.encode(ComplexStruct_bc_obj)
+	b.add("serdegen-bincode:v2:decode", () => {
+		BincodeRegistryV2.ComplexStruct.decode(bincodec_encoded_v2)
 	})
 
 	let json_encoded = JSON.stringify(ComplexStruct_bc_obj)
