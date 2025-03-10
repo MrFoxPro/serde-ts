@@ -68,7 +68,7 @@
               '';
               scripts."run:suite".exec = ''
                 set -e
-                gen:bincode && gen:proto && run:test && run:benchmarks
+                gen:bincode && gen:proto && run:test
               '';
             };
           };

@@ -49,12 +49,12 @@ fn print_tests() -> AResult<()> {
 					await t.test("encode", () => assert.deepEqual(RegistryV1.{name}.encode(as_object), encoded))
 					await t.test("decode", () => assert.deepEqual(RegistryV1.{name}.decode(encoded), as_object))
 				}})
-				/* await t.test("v2", async t => {{
+				await t.test("v2", async t => {{
 					let as_object: RegistryV2.{name} = {js_obj}
 					let encoded = Uint8Array.from({bytes_v2:?})
 					await t.test("encode", () => assert.deepEqual(RegistryV2.{name}.encode(as_object), encoded))
 					await t.test("decode", () => assert.deepEqual(RegistryV2.{name}.decode(encoded), as_object))
-				}}) */
+				}})
 			}})
 		"#)?;
 		Ok(())

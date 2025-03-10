@@ -91,8 +91,8 @@ export abstract class BinaryWriter implements Writer {
 		}
 	}
 
-	private alloc(allocLength: number) {
-		let wish_size = this.offset + allocLength
+	protected alloc(alloc_length: number) {
+		let wish_size = this.offset + alloc_length
 
 		let current_length = this.view.buffer.byteLength
 		if (wish_size > current_length) {
@@ -202,13 +202,12 @@ export abstract class BinaryWriter implements Writer {
 		this.write_bool(value)
 	}
 
-	public write_map<T, V>(map: Map<T, V>, write_key: (key: T) => void, write_value: (value: V) => void): void {
+	public write_map<T, V>(map: Map<T, V>, write_key: (key: T) => void, write_value: (value: V) => void) {
 		this.write_length(map.size)
 		let offsets: number[] = []
 		for (let [k, v] of map.entries()) {
 			offsets.push(this.offset)
-			write_key(k)
-			write_value(v)
+			write_key(k), write_value(v)
 		}
 		this.sort_map_entries(offsets)
 	}
@@ -325,8 +324,8 @@ export abstract class BinaryReader implements Reader {
 
 	public read_option_tag = this.read_bool
 
-	public read_list<T>(read_fn: () => T, listLength?: number) {
-		let length = listLength ?? this.read_length(), list = new Array<T>(length)
+	public read_list<T>(read_fn: () => T, list_len?: number) {
+		let length = list_len ?? this.read_length(), list = new Array<T>(length)
 		for (let i = 0; i < length; i++) list[i] = read_fn()
 		return list
 	}

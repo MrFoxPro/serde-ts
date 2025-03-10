@@ -10,12 +10,12 @@ test(`SimpleStruct { a: 42, b: "Hello" }`, async t => {
 		await t.test("encode", () => assert.deepEqual(RegistryV1.SimpleStruct.encode(as_object), encoded))
 		await t.test("decode", () => assert.deepEqual(RegistryV1.SimpleStruct.decode(encoded), as_object))
 	})
-	/* await t.test("v2", async t => {
+	await t.test("v2", async t => {
 		let as_object: RegistryV2.SimpleStruct = { a: 42, b: "Hello" }
 		let encoded = Uint8Array.from([42, 5, 72, 101, 108, 108, 111])
 		await t.test("encode", () => assert.deepEqual(RegistryV2.SimpleStruct.encode(as_object), encoded))
 		await t.test("decode", () => assert.deepEqual(RegistryV2.SimpleStruct.decode(encoded), as_object))
-	}) */
+	})
 })
 test(`VariantC { x: 5, y: 3.14 }`, async t => {
 	await t.test("v1", async t => {
@@ -24,12 +24,12 @@ test(`VariantC { x: 5, y: 3.14 }`, async t => {
 		await t.test("encode", () => assert.deepEqual(RegistryV1.MultiEnum.encode(as_object), encoded))
 		await t.test("decode", () => assert.deepEqual(RegistryV1.MultiEnum.decode(encoded), as_object))
 	})
-	/* await t.test("v2", async t => {
+	await t.test("v2", async t => {
 		let as_object: RegistryV2.MultiEnum = { $: "variant_c", x: 5, y: 3.14 }
 		let encoded = Uint8Array.from([2, 5, 31, 133, 235, 81, 184, 30, 9, 64])
 		await t.test("encode", () => assert.deepEqual(RegistryV2.MultiEnum.encode(as_object), encoded))
 		await t.test("decode", () => assert.deepEqual(RegistryV2.MultiEnum.decode(encoded), as_object))
-	}) */
+	})
 })
 test(`UnitVariant`, async t => {
 	await t.test("v1", async t => {
@@ -38,12 +38,12 @@ test(`UnitVariant`, async t => {
 		await t.test("encode", () => assert.deepEqual(RegistryV1.MultiEnum.encode(as_object), encoded))
 		await t.test("decode", () => assert.deepEqual(RegistryV1.MultiEnum.decode(encoded), as_object))
 	})
-	/* await t.test("v2", async t => {
+	await t.test("v2", async t => {
 		let as_object: RegistryV2.MultiEnum = { $: "unit_variant", $0: null }
 		let encoded = Uint8Array.from([3])
 		await t.test("encode", () => assert.deepEqual(RegistryV2.MultiEnum.encode(as_object), encoded))
 		await t.test("decode", () => assert.deepEqual(RegistryV2.MultiEnum.decode(encoded), as_object))
-	}) */
+	})
 })
 test(`ComplexStruct { inner: SimpleStruct { a: 42, b: "Hello" }, flag: true, items: [VariantA(10), VariantB("World")], unit: UnitStruct, newtype: NewtypeStruct(99), tuple: TupleStruct(123, 45.67, "Test"), tupple_inline: ("SomeString", 777), map: {3: 7} }`, async t => {
 	await t.test("v1", async t => {
@@ -64,7 +64,7 @@ test(`ComplexStruct { inner: SimpleStruct { a: 42, b: "Hello" }, flag: true, ite
 		await t.test("encode", () => assert.deepEqual(RegistryV1.ComplexStruct.encode(as_object), encoded))
 		await t.test("decode", () => assert.deepEqual(RegistryV1.ComplexStruct.decode(encoded), as_object))
 	})
-	/* await t.test("v2", async t => {
+	await t.test("v2", async t => {
 		let as_object: RegistryV2.ComplexStruct = {
 			inner: { a: 42, b: "Hello" },
 			flag: true,
@@ -81,5 +81,5 @@ test(`ComplexStruct { inner: SimpleStruct { a: 42, b: "Hello" }, flag: true, ite
 		let encoded = Uint8Array.from([42, 5, 72, 101, 108, 108, 111, 1, 2, 0, 20, 1, 5, 87, 111, 114, 108, 100, 198, 246, 246, 40, 92, 143, 194, 213, 70, 64, 4, 84, 101, 115, 116, 10, 83, 111, 109, 101, 83, 116, 114, 105, 110, 103, 251, 18, 6, 1, 6, 14])
 		await t.test("encode", () => assert.deepEqual(RegistryV2.ComplexStruct.encode(as_object), encoded))
 		await t.test("decode", () => assert.deepEqual(RegistryV2.ComplexStruct.decode(encoded), as_object))
-	}) */
+	})
 })
