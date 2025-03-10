@@ -29,3 +29,5 @@ run:suite
 │ 3       │ '@bufbuild/protobuf-ts-proto:decode' │ '719,423' │ 1390.0009201800447 │ '±0.26%' │ 1079136 │
 └─────────┴──────────────────────────────────────┴───────────┴────────────────────┴──────────┴─────────┘
 ```
+
+Reference Rust formats benchmarks: https://david.kolo.ski/rust_serialization_benchmark
