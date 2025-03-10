@@ -16,8 +16,8 @@ export class BinaryWriter extends Serde.BinaryWriter {
 	write_length(value: number) {
 		this.write_u64(value)
 	}
-	public write_variant_index(value: number) {
-		this.write_u32(value)
+	public write_variant_index(val: number) {
+		this.write_u32(val)
 	}
 	public sort_map_entries(offsets: number[]) {
 		return

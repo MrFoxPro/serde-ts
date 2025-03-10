@@ -2,13 +2,13 @@ import type * as $t from "../../../runtime/serde.ts"
 import { BinaryReader, BinaryWriter } from "../../../runtime/bincode_v1.ts"
 
 export type ComplexStruct = {
-	inner: SimpleStruct,
+	inner?: $t.Optional<SimpleStruct>,
 	flag: $t.bool,
 	items: $t.Seq<MultiEnum>,
 	unit: UnitStruct,
 	newtype: NewtypeStruct,
 	tuple: TupleStruct,
-	tupple_inline: $t.Tuple<[$t.str, $t.i32]>,
+	tupple_inline: $t.Tuple<[$t.str, $t.u128]>,
 	map: $t.Map<$t.i32, $t.i64>,
 }
 
@@ -18,7 +18,7 @@ export type MultiEnum =
 	| { $: "variant_c", x: $t.u8, y: $t.f64 }
 	| { $: "unit_variant", $0?: $t.unit }
 
-export type NewtypeStruct = $t.i32
+export type NewtypeStruct = $t.i128
 
 export type SimpleStruct = {
 	a: $t.u32,
@@ -31,7 +31,12 @@ export type UnitStruct = $t.unit
 
 export const ComplexStruct = {
 	encode(value: ComplexStruct, writer = new BinaryWriter()) {
-		SimpleStruct.encode(value.inner, writer)
+		if (value.inner) {
+			writer.write_option_tag(true)
+			SimpleStruct.encode(value.inner, writer)
+		}
+		else writer.write_option_tag(false)
+
 		writer.write_bool(value.flag)
 		writer.write_length(value.items.length)
 		for (let item of value.items) {
@@ -41,13 +46,13 @@ export const ComplexStruct = {
 		NewtypeStruct.encode(value.newtype, writer)
 		TupleStruct.encode(value.tuple, writer)
 		writer.write_string(value.tupple_inline.$0)
-		writer.write_i32(value.tupple_inline.$1)
+		writer.write_u128(value.tupple_inline.$1)
 		writer.write_map(value.map, writer.write_i32.bind(writer), writer.write_i64.bind(writer))
 		return writer.get_bytes()
 	},
 	decode(input: Uint8Array, reader = new BinaryReader(input)) {
 		let value: ComplexStruct = {
-			inner: SimpleStruct.decode(input, reader),
+			inner: reader.read_option_tag() ? SimpleStruct.decode(input, reader) : null,
 			flag: reader.read_bool(),
 			items: reader.read_list<MultiEnum>(() => MultiEnum.decode(input, reader)),
 			unit: UnitStruct.decode(input, reader),
@@ -55,7 +60,7 @@ export const ComplexStruct = {
 			tuple: TupleStruct.decode(input, reader),
 			tupple_inline: {
 				$0: reader.read_string(),
-				$1: reader.read_i32(),
+				$1: reader.read_u128(),
 			},
 			map: reader.read_map<$t.i32, $t.i64>(reader.read_i32.bind(reader), reader.read_i64.bind(reader)),
 		}
@@ -130,11 +135,11 @@ export const MultiEnum = {
 
 export const NewtypeStruct = {
 	encode(value: NewtypeStruct, writer = new BinaryWriter()) {
-		writer.write_i32(value)
+		writer.write_i128(value)
 		return writer.get_bytes()
 	},
 	decode(input: Uint8Array, reader = new BinaryReader(input)) {
-		let value: NewtypeStruct = reader.read_i32()
+		let value: NewtypeStruct = reader.read_i128()
 		return value
 	}
 }

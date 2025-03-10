@@ -362,7 +362,8 @@ impl<'a, T: Write> TypeScriptEmitter<'a, T> {
 			F64         => format!("writer.write_f64({value})"),
 			Char        => format!("writer.write_char({value})"),
 			Str         => format!("writer.write_string({value})"),
-			Bytes       => format!("writer.write_bytes({value})"),          Option(inner) => {
+			Bytes       => format!("writer.write_bytes({value})"),
+			Option(inner) => {
 				formatdoc! {
 					"
 						if ({value}) {{

@@ -77,7 +77,7 @@ fn print_tests() -> AResult<()> {
 	add_test(&mut out, &multienum_unit, r#"{ $: "unit_variant", $0: null }"#)?;
 
 	let complex_instance = ComplexStruct {
-		inner: simple_struct,
+		inner: Some(simple_struct),
 		flag: true,
 		items: vec![MultiEnum::VariantA(10), MultiEnum::VariantB("World".into())],
 		unit: UnitStruct,
@@ -95,10 +95,37 @@ fn print_tests() -> AResult<()> {
 				{ $: "variant_b", $0: "World" },
 			],
 			unit: null,
-			newtype: 99,
+			newtype: 99n,
 			tuple: { $0: 123, $1: 45.67, $2: "Test" },
-			tupple_inline: { $0: "SomeString", $1: 777 },
+			tupple_inline: { $0: "SomeString", $1: 777n },
 			map: new Map().set(3, 7n),
+		}"#
+	)?;
+
+
+	let complex_instance = ComplexStruct {
+		inner: None,
+		flag: true,
+		items: vec![MultiEnum::VariantA(-10), MultiEnum::VariantB("".into())],
+		unit: UnitStruct,
+		newtype: NewtypeStruct(-4252345999999643699),
+		tuple: TupleStruct(-123, 45.67 as f64, "🤔".into()),
+		tupple_inline: ("SomeString".into(), 77723485626853535523457346),
+		map: HashMap::from_iter([(-3, -7)])
+	};
+	add_test(&mut out, &complex_instance,
+		r#"{
+			inner: null,
+			flag: true,
+			items: [
+				{ $: "variant_a", $0: -10 },
+				{ $: "variant_b", $0: "" },
+			],
+			unit: null,
+			newtype: -4252345999999643699n,
+			tuple: { $0: -123, $1: 45.67, $2: "🤔" },
+			tupple_inline: { $0: "SomeString", $1: 77723485626853535523457346n },
+			map: new Map().set(-3, -7n),
 		}"#
 	)?;
 
@@ -123,20 +150,20 @@ enum MultiEnum {
 struct UnitStruct;
 
 #[derive(Debug, Serialize, Deserialize, Encode, Decode)]
-struct NewtypeStruct(i32);
+struct NewtypeStruct(i128);
 
 #[derive(Debug, Serialize, Deserialize, Encode, Decode)]
 struct TupleStruct(i32, f64, String);
 
 #[derive(Debug, Serialize, Deserialize, Encode, Decode)]
 struct ComplexStruct {
-	inner: SimpleStruct,
+	inner: Option<SimpleStruct>,
 	flag: bool,
 	items: Vec<MultiEnum>,
 	unit: UnitStruct,
 	newtype: NewtypeStruct,
 	tuple: TupleStruct,
-	tupple_inline: (String, i32),
+	tupple_inline: (String, u128),
 	map: HashMap<i32, i64>
 }
 

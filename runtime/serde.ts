@@ -74,8 +74,11 @@ export interface Writer {
 	sort_map_entries(offsets: number[]): void
 }
 
-const BIG_32 = 32n, BIG_64 = 64n
-const BIG_32Fs = 429967295n, BIG_64Fs = 18446744073709551615n
+export const
+	BIG_32 = 32n,
+	BIG_64 = 64n,
+	BIG_32Fs = 429967295n,
+	BIG_64Fs = 18446744073709551615n
 
 export const WRITE_DEFAULT_HEAP_SIZE = 128
 
@@ -108,84 +111,84 @@ export abstract class BinaryWriter implements Writer {
 	abstract sort_map_entries(offsets: number[]): void
 
 	// https://developer.mozilla.org/en-US/docs/Web/API/TextEncoder/encodeInto#buffer_sizing
-	public write_string(value: string) {
+	public write_string(val: string) {
 		// allocate space for string length marker and whole string
-		this.alloc(8 + value.length * 3)
+		this.alloc(8 + val.length * 3)
 
 		// encode into buffer with space for string length (u64)
-		let { written: length } = BinaryWriter.TEXT_ENCODER.encodeInto(value, new Uint8Array(this.view.buffer, this.offset + 8))
+		let { written: length } = BinaryWriter.TEXT_ENCODER.encodeInto(val, new Uint8Array(this.view.buffer, this.offset + 8))
 
 		let b_length = BigInt(length)
 		this.view.setBigUint64(this.offset, b_length, true)
 		this.offset += (8 + length)
 	}
 
-	public write_bool(value: boolean) {
-		this.write_u8(value ? 1 : 0)
+	public write_bool(val: boolean) {
+		this.write_u8(val ? 1 : 0)
 	}
 
-	public write_unit(_value: null) {
+	public write_unit(_val: null) {
 		return
 	}
 
-	public write_u8(value: number) {
+	public write_u8(val: number) {
 		this.alloc(1)
-		this.view.setUint8(this.offset, value)
+		this.view.setUint8(this.offset, val)
 		this.offset += 1
 	}
 
-	public write_u16(value: number) {
+	public write_u16(val: number) {
 		this.alloc(2)
-		this.view.setUint16(this.offset, value, true)
+		this.view.setUint16(this.offset, val, true)
 		this.offset += 2
 	}
 
-	public write_u32(value: number) {
+	public write_u32(val: number) {
 		this.alloc(4)
-		this.view.setUint32(this.offset, value, true)
+		this.view.setUint32(this.offset, val, true)
 		this.offset += 4
 	}
 
-	public write_u64(value: bigint | number) {
+	public write_u64(val: bigint | number) {
 		this.alloc(8)
-		this.view.setBigUint64(this.offset, BigInt(value), true)
+		this.view.setBigUint64(this.offset, BigInt(val), true)
 		this.offset += 8
 	}
 
-	public write_u128(value: bigint | number) {
-		let low = BigInt(value) & BIG_64Fs, high = BigInt(value) >> BIG_64
+	public write_u128(val: bigint | number) {
+		let low = BigInt(val) & BIG_64Fs, high = BigInt(val) >> BIG_64
 
 		// write little endian number
 		this.write_u64(low)
 		this.write_u64(high)
 	}
 
-	public write_i8(value: number) {
+	public write_i8(val: number) {
 		this.alloc(1)
-		this.view.setInt8(this.offset, value)
+		this.view.setInt8(this.offset, val)
 		this.offset += 1
 	}
 
-	public write_i16(value: number) {
+	public write_i16(val: number) {
 		this.alloc(2)
-		this.view.setInt16(this.offset, value, true)
+		this.view.setInt16(this.offset, val, true)
 		this.offset += 2
 	}
 
-	public write_i32(value: number) {
+	public write_i32(val: number) {
 		this.alloc(4)
-		this.view.setInt32(this.offset, value, true)
+		this.view.setInt32(this.offset, val, true)
 		this.offset += 4
 	}
 
-	public write_i64(value: bigint | number) {
+	public write_i64(val: bigint | number) {
 		this.alloc(8)
-		this.view.setBigInt64(this.offset, BigInt(value), true)
+		this.view.setBigInt64(this.offset, BigInt(val), true)
 		this.offset += 8
 	}
 
-	public write_i128(value: bigint | number) {
-		let low = BigInt(value) & BIG_64Fs, high = BigInt(value) >> BIG_64
+	public write_i128(val: bigint | number) {
+		let low = BigInt(val) & BIG_64Fs, high = BigInt(val) >> BIG_64
 
 		// write little endian number
 		this.write_i64(low)
@@ -206,19 +209,19 @@ export abstract class BinaryWriter implements Writer {
 		this.sort_map_entries(offsets)
 	}
 
-	public write_f32(value: number) {
+	public write_f32(val: number) {
 		this.alloc(4)
-		this.view.setFloat32(this.offset, value, true)
+		this.view.setFloat32(this.offset, val, true)
 		this.offset += 4
 	}
 
-	public write_f64(value: number) {
+	public write_f64(val: number) {
 		this.alloc(8)
-		this.view.setFloat64(this.offset, value, true)
+		this.view.setFloat64(this.offset, val, true)
 		this.offset += 8
 	}
 
-	public write_char(_value: string) {
+	public write_char(_val: string) {
 		throw new Error("Method serializeChar not implemented.")
 	}
 
@@ -287,37 +290,35 @@ export abstract class BinaryReader implements Reader {
 
 	public read_u128() {
 		let low = this.read_u64(), high = this.read_u64()
-		// combine the two 64-bit values and return (little endian)
 		return (high << BIG_64) | low
 	}
 
 	public read_i8() {
-		let value = this.view.getInt8(this.offset)
+		let val = this.view.getInt8(this.offset)
 		this.offset += 1
-		return value
+		return val
 	}
 
 	public read_i16() {
-		let value = this.view.getInt16(this.offset, true)
+		let val = this.view.getInt16(this.offset, true)
 		this.offset += 2
-		return value
+		return val
 	}
 
 	public read_i32() {
-		let value = this.view.getInt32(this.offset, true)
+		let val = this.view.getInt32(this.offset, true)
 		this.offset += 4
-		return value
+		return val
 	}
 
 	public read_i64() {
-		let value = this.view.getBigInt64(this.offset, true)
+		let val = this.view.getBigInt64(this.offset, true)
 		this.offset += 8
-		return value
+		return val
 	}
 
 	public read_i128() {
 		let low = this.read_i64(), high = this.read_i64()
-		// combine the two 64-bit values and return (little endian)
 		return (high << BIG_64) | low
 	}
 
@@ -330,17 +331,15 @@ export abstract class BinaryReader implements Reader {
 	}
 
 	public read_map<K, V>(read_key: () => K, read_value: () => V) {
-		let length = this.read_length(), obj = new Map<K, V>()
-		let previous_key_start = 0, previous_key_end = 0
+		let length = this.read_length(), map = new Map<K, V>()
+		// let pkey_start = 0, pkey_end = 0
 		for (let i = 0; i < length; i++) {
-			let key_start = this.offset, key = read_key(), key_end = this.offset
-
-			if (i > 0) this.check_that_key_slices_are_increasing([previous_key_start, previous_key_end], [key_start, key_end])
-
-			previous_key_start = key_start, previous_key_end = key_end
-			obj.set(key, read_value())
+			// let key_start = this.offset, key = read_key(), key_end = this.offset
+			// if (i > 0) this.check_that_key_slices_are_increasing([pkey_start, pkey_end], [key_start, key_end])
+			// pkey_start = key_start, pkey_end = key_end
+			map.set(read_key(), read_value())
 		}
-		return obj
+		return map
 	}
 
 	public read_char(): string {
@@ -348,14 +347,14 @@ export abstract class BinaryReader implements Reader {
 	}
 
 	public read_f32() {
-		let value = this.view.getFloat32(this.offset, true)
+		let val = this.view.getFloat32(this.offset, true)
 		this.offset += 4
-		return value
+		return val
 	}
 
 	public read_f64() {
-		let value = this.view.getFloat64(this.offset, true)
+		let val = this.view.getFloat64(this.offset, true)
 		this.offset += 8
-		return value
+		return val
 	}
 }

@@ -61,11 +61,16 @@ export class BinaryWriter extends Serde.BinaryWriter {
 		if (val <= U16_MAX) return super.write_u8(U16_BYTE), super.write_u16(Number(val))
 		if (val <= U32_MAX) return super.write_u8(U32_BYTE), super.write_u32(Number(val))
 		if (val <= U64_MAX) return super.write_u8(U64_BYTE), super.write_u64(val)
-		super.write_u8(U128_BYTE), super.write_u128(val)
+
+		super.write_u8(U128_BYTE)
+		this.alloc(16)
+		this.view.setBigUint64(this.offset, BigInt(val) & Serde.BIG_64Fs, true)
+		this.view.setBigUint64(this.offset + 8, BigInt(val) >> Serde.BIG_64, true)
+		this.offset += 16
 	}
 
-	transform_signed(val: number) { return val >= 0 ? (val * 2) : (~val * 2 + 1) }
-	transform_signed_big(val: bigint) { return val >= 0 ? (val * 2n) : (~val * 2n + 1n) }
+	transform_signed(val: number) { return val >= 0 ? val * 2 : ~val * 2 + 1 }
+	transform_signed_big(val: bigint) { return val >= 0 ? val * 2n : ~val * 2n + 1n }
 
 	override write_i16(val: number) {
 		this.write_u16(this.transform_signed(val))
@@ -128,12 +133,15 @@ export class BinaryReader extends Serde.BinaryReader {
 		if (d === U16_BYTE)  return BigInt(super.read_u16())
 		if (d === U32_BYTE)  return BigInt(super.read_u32())
 		if (d === U64_BYTE)  return super.read_u64()
-		if (d === U128_BYTE) return super.read_u128()
+		if (d === U128_BYTE) {
+			let low = super.read_u64(), high = super.read_u64()
+			return (high << Serde.BIG_64) | low
+		}
 		throw `invalid discriminant ${d}`
 	}
 
-	transform_signed(n: number) { return n % 2 === 0 ? n / 2 : ~(n >> 1) }
-	transform_signed_big(n: bigint) { return n % 2n === 0n ? n / 2n : ~(n >> 1n) }
+	transform_signed(n: number) { return n % 2 === 0 ? n / 2 : ~Math.floor(n / 2) }
+	transform_signed_big(n: bigint) { return n % 2n === 0n ? n / 2n : ~(n / 2n) }
 
 	override read_i16() {
 		return this.transform_signed(this.read_u16())
