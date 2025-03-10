@@ -45,7 +45,7 @@ await async function bench_encode() {
 		JSON.stringify(ComplexStruct_bc_obj)
 	})
 	
-	b.add("protobuf-js-ts-proto:encode", () => {
+	b.add("@bufbuild/protobuf-ts-proto:encode", () => {
 		ProtobufRegistry.ComplexStruct.encode(ComplexStruct_pb_obj)
 	})
 
@@ -74,7 +74,7 @@ await async function bench_decode() {
 	})
 
 	let pb_encoded = ProtobufRegistry.ComplexStruct.encode(ComplexStruct_pb_obj).finish()
-	b.add("protobuf-js-ts-proto:decode", () => {
+	b.add("@bufbuild/protobuf-ts-proto:decode", () => {
 		ProtobufRegistry.ComplexStruct.decode(pb_encoded)
 	})
 
