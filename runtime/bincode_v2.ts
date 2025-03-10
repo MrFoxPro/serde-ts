@@ -15,8 +15,7 @@ export class BinaryWriter extends Serde.BinaryWriter {
 	// using WRITE_HEAP cache in v2 causes weird runtime error `RangeError: Invalid DataView length 77687102186155120`
 	constructor() {
 		super()
-		this.view = new DataView(new ArrayBuffer(Serde.WRITE_DEFAULT_HEAP_SIZE))
-		if (WRITE_STRING_CACHE.byteLength > 2048) {
+		if (WRITE_STRING_CACHE.byteLength > 4096) {
 			WRITE_STRING_CACHE = new Uint8Array(WRITE_STRING_BUFFER_DEFAULT_SIZE)
 		}
 	}

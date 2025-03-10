@@ -78,19 +78,12 @@ const BIG_32 = 32n, BIG_64 = 64n
 const BIG_32Fs = 429967295n, BIG_64Fs = 18446744073709551615n
 
 export const WRITE_DEFAULT_HEAP_SIZE = 128
-let WRITE_HEAP = new DataView(new ArrayBuffer(WRITE_DEFAULT_HEAP_SIZE))
 
 export abstract class BinaryWriter implements Writer {
 	public static readonly TEXT_ENCODER = new TextEncoder()
 
-	public view = WRITE_HEAP
+	public view = new DataView(new ArrayBuffer(WRITE_DEFAULT_HEAP_SIZE))
 	public offset = 0
-
-	constructor() {
-		if (WRITE_HEAP.byteLength > 1024) {
-			this.view = WRITE_HEAP = new DataView(new ArrayBuffer(WRITE_DEFAULT_HEAP_SIZE))
-		}
-	}
 
 	protected alloc(alloc_length: number) {
 		let wish_size = this.offset + alloc_length
@@ -106,7 +99,7 @@ export abstract class BinaryWriter implements Writer {
 			let new_buffer = new Uint8Array(new_buffer_length)
 			new_buffer.set(new Uint8Array(this.view.buffer))
 
-			this.view = WRITE_HEAP = new DataView(new_buffer.buffer)
+			this.view = new DataView(new_buffer.buffer)
 		}
 	}
 
@@ -232,6 +225,10 @@ export abstract class BinaryWriter implements Writer {
 	public get_bytes() {
 		return new Uint8Array(this.view.buffer).subarray(0, this.offset)
 	}
+
+	public reset() {
+		this.offset = 0
+	}
 }
 
 export abstract class BinaryReader implements Reader {
@@ -250,6 +247,7 @@ export abstract class BinaryReader implements Reader {
 
 	public read_string() {
 		let length = this.read_length()
+		if (length === 0) return ""
 		let decoded = BinaryReader.TEXT_DECODER.decode(new DataView(this.view.buffer, this.offset, length))
 		this.offset += length
 		return decoded

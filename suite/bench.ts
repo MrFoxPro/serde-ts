@@ -2,6 +2,9 @@ import { Bench } from "tinybench"
 import * as ProtobufRegistry from "./generated/proto/main.ts"
 import * as BincodeRegistryV1 from "./generated/bincode/registry_v1.ts"
 import * as BincodeRegistryV2 from "./generated/bincode/registry_v2.ts"
+import { BinaryWriter as BinaryWriterV1 } from "../runtime/bincode_v1.ts"
+import { BinaryWriter as BinaryWriterV2 } from "../runtime/bincode_v2.ts"
+import { BinaryWriter as BinaryWriterPb } from "@bufbuild/protobuf/wire"
 
 const ComplexStruct_bc_obj: BincodeRegistryV1.ComplexStruct = {
 	inner: { a: 42, b: "Hello" },
@@ -30,15 +33,21 @@ const ComplexStruct_pb_obj: ProtobufRegistry.ComplexStruct = {
 	map: { 3: 7n }
 }
 
+let writer1 = new BinaryWriterV1()
+let writer2 = new BinaryWriterV2()
+let pb_writer = new BinaryWriterPb()
+
 await async function bench_encode() {
 	let b = new Bench({ time: 1_500 })
 
 	b.add("serdegen-bincode:v1:encode", () => {
-		BincodeRegistryV1.ComplexStruct.encode(ComplexStruct_bc_obj)
+		BincodeRegistryV1.ComplexStruct.encode(ComplexStruct_bc_obj, writer1)
+		writer1.reset()
 	})
 
 	b.add("serdegen-bincode:v2:encode", () => {
-		BincodeRegistryV2.ComplexStruct.encode(ComplexStruct_bc_obj)
+		BincodeRegistryV2.ComplexStruct.encode(ComplexStruct_bc_obj, writer2)
+		writer2.reset()
 	})
 
 	b.add("JSON:encode", () => {
@@ -46,7 +55,7 @@ await async function bench_encode() {
 	})
 	
 	b.add("@bufbuild/protobuf-ts-proto:encode", () => {
-		ProtobufRegistry.ComplexStruct.encode(ComplexStruct_pb_obj)
+		ProtobufRegistry.ComplexStruct.encode(ComplexStruct_pb_obj, pb_writer)
 	})
 
 	await b.warmup()

@@ -31,6 +31,11 @@ fn print_tests() -> AResult<()> {
 		import * as assert from "node:assert/strict"
 		import * as RegistryV1 from "./registry_v1.ts"
 		import * as RegistryV2 from "./registry_v2.ts"
+		import {{ BinaryWriter as BinaryWriterV1 }} from "../../../runtime/bincode_v1.ts"
+		import {{ BinaryWriter as BinaryWriterV2 }} from "../../../runtime/bincode_v2.ts"
+
+		let writer1 = new BinaryWriterV1()
+		let writer2 = new BinaryWriterV2()
 	"#);
 	writeln!(out);
 
@@ -46,13 +51,15 @@ fn print_tests() -> AResult<()> {
 				await t.test("v1", async t => {{
 					let as_object: RegistryV1.{name} = {js_obj}
 					let encoded = Uint8Array.from({bytes_v1:?})
-					await t.test("encode", () => assert.deepEqual(RegistryV1.{name}.encode(as_object), encoded))
+					await t.test("encode", () => assert.deepEqual(RegistryV1.{name}.encode(as_object, writer1), encoded))
+					writer1.reset()
 					await t.test("decode", () => assert.deepEqual(RegistryV1.{name}.decode(encoded), as_object))
 				}})
 				await t.test("v2", async t => {{
 					let as_object: RegistryV2.{name} = {js_obj}
 					let encoded = Uint8Array.from({bytes_v2:?})
-					await t.test("encode", () => assert.deepEqual(RegistryV2.{name}.encode(as_object), encoded))
+					await t.test("encode", () => assert.deepEqual(RegistryV2.{name}.encode(as_object, writer2), encoded))
+					writer2.reset()
 					await t.test("decode", () => assert.deepEqual(RegistryV2.{name}.decode(encoded), as_object))
 				}})
 			}})
