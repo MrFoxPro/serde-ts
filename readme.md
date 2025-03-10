@@ -10,8 +10,7 @@ pnpm i
 run:suite
 ```
 
-## Results
-### Encode
+## Benchmarks
 ```
 ┌─────────┬───────────────────────────────┬─────────────┬────────────────────┬──────────┬─────────┐
 │ (index) │ Task Name                     │ ops/sec     │ Average Time (ns)  │ Margin   │ Samples │
