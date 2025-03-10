@@ -36,6 +36,7 @@ await async function bench_encode() {
 	b.add("serdegen-bincode:v1:encode", () => {
 		BincodeRegistryV1.ComplexStruct.encode(ComplexStruct_bc_obj)
 	})
+
 	b.add("serdegen-bincode:v2:encode", () => {
 		BincodeRegistryV2.ComplexStruct.encode(ComplexStruct_bc_obj)
 	})

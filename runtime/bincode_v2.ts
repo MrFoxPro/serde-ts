@@ -7,11 +7,15 @@ const
 	U64_BYTE  = 253, U64_MAX = 18446744073709551615n,
 	U128_BYTE = 254
 
+let WRITE_STRING_BUFFER = new Uint8Array(256)
 export class BinaryWriter extends Serde.BinaryWriter {
 	// using WRITE_HEAP cache in v2 causes weird runtime error `RangeError: Invalid DataView length 77687102186155120`
 	constructor() {
 		super()
-		this.view = new DataView(new ArrayBuffer(128))
+		this.view = new DataView(new ArrayBuffer(256))
+		if (WRITE_STRING_BUFFER.byteLength > 2048) {
+			WRITE_STRING_BUFFER = new Uint8Array(256)
+		}
 	}
 	override write_length(value: number) {
 		this.write_u64(value)
@@ -32,39 +36,59 @@ export class BinaryWriter extends Serde.BinaryWriter {
 		super.write_u8(U32_BYTE), super.write_u32(val)
 	}
 	override write_u64(val: number | bigint) {
+		if (typeof val !== "bigint") {
+			if (val <= SINGLE_BYTE_MAX) return super.write_u8(val)
+			if (val <= U16_MAX) return super.write_u8(U16_BYTE), super.write_u16(val)
+			if (val <= U32_MAX) return super.write_u8(U32_BYTE), super.write_u32(val)
+			return super.write_u8(U64_BYTE), super.write_u64(val)
+		}
 		if (val <= SINGLE_BYTE_MAX) return super.write_u8(Number(val))
 		if (val <= U16_MAX) return super.write_u8(U16_BYTE), super.write_u16(Number(val))
 		if (val <= U32_MAX) return super.write_u8(U32_BYTE), super.write_u32(Number(val))
 		super.write_u8(U64_BYTE), super.write_u64(val)
 	}
 	override write_u128(val: number | bigint) {
+		if (typeof val !== "bigint") {
+			if (val <= SINGLE_BYTE_MAX) return super.write_u8(val)
+			if (val <= U16_MAX) return super.write_u8(U16_BYTE), super.write_u16(val)
+			if (val <= U32_MAX) return super.write_u8(U32_BYTE), super.write_u32(val)
+			if (val <= U64_MAX) return super.write_u8(U64_BYTE), super.write_u64(val)
+			throw `incorrect value`
+		}
 		if (val <= SINGLE_BYTE_MAX) return super.write_u8(Number(val))
 		if (val <= U16_MAX) return super.write_u8(U16_BYTE), super.write_u16(Number(val))
 		if (val <= U32_MAX) return super.write_u8(U32_BYTE), super.write_u32(Number(val))
 		if (val <= U64_MAX) return super.write_u8(U64_BYTE), super.write_u64(val)
 		super.write_u8(U128_BYTE), super.write_u128(val)
 	}
+
+	transform_signed(val: number) { return val >= 0 ? (val * 2) : (~val * 2 + 1) }
+	transform_signed_big(val: bigint) { return val >= 0 ? (val * 2n) : (~val * 2n + 1n) }
+
 	override write_i16(val: number) {
-		this.write_u16(val < 0 ? (~val * 2 + 1) : (val * 2))
+		this.write_u16(this.transform_signed(val))
 	}
 	override write_i32(val: number) {
-		this.write_u32(val < 0 ? (~val * 2 + 1) : (val * 2))
+		this.write_u32(this.transform_signed(val))
 	}
 	override write_i64(val: number | bigint) {
-		val = BigInt(val)
-		this.write_u64(val < 0 ? (~val * 2n + 1n) : (val * 2n))
+		if (typeof val !== "bigint") return this.write_u64(this.transform_signed(val))
+		return this.write_u64(this.transform_signed_big(val))
 	}
 	override write_i128(val: number | bigint) {
-		val = BigInt(val)
-		this.write_u128(val < 0 ? (~val * 2n + 1n) : (val * 2n))
+		if (typeof val !== "bigint") return this.write_u128(this.transform_signed(val))
+		return this.write_u128(this.transform_signed_big(val))
 	}
+
 	override write_string(value: string) {
-		let bytes = BinaryWriter.TEXT_ENCODER.encode(value)
-		this.write_u64(bytes.length)
-		new Uint8Array(this.view.buffer, this.offset).set(bytes)
-		this.offset += bytes.length
+		this.alloc(8 + value.length * 3)
+		let { written: length } = BinaryWriter.TEXT_ENCODER.encodeInto(value, WRITE_STRING_BUFFER)
+		this.write_u64(length)
+		new Uint8Array(this.view.buffer, this.offset).set(WRITE_STRING_BUFFER.subarray(0, length))
+		this.offset += length
 	}
 }
+
 
 export class BinaryReader extends Serde.BinaryReader {
 	override read_length() {
@@ -80,14 +104,14 @@ export class BinaryReader extends Serde.BinaryReader {
 		let d = super.read_u8()
 		if (d <= SINGLE_BYTE_MAX) return d
 		if (d === U16_BYTE) return super.read_u16()
-		throw new Error(`invalid discriminant ${d}`)
+		throw `invalid discriminant ${d}`
 	}
 	override read_u32() {
 		let d = super.read_u8()
 		if (d <= SINGLE_BYTE_MAX) return d
 		if (d === U16_BYTE) return super.read_u16()
 		if (d === U32_BYTE) return super.read_u32()
-		throw new Error(`invalid discriminant ${d}`)
+		throw `invalid discriminant ${d}`
 	}
 	override read_u64() {
 		let d = super.read_u8()
@@ -95,7 +119,7 @@ export class BinaryReader extends Serde.BinaryReader {
 		if (d === U16_BYTE) return BigInt(super.read_u16())
 		if (d === U32_BYTE) return BigInt(super.read_u32())
 		if (d === U64_BYTE) return super.read_u64()
-		throw new Error(`invalid discriminant ${d}`)
+		throw `invalid discriminant ${d}`
 	}
 	override read_u128() {
 		let d = super.read_u8()
@@ -104,7 +128,7 @@ export class BinaryReader extends Serde.BinaryReader {
 		if (d === U32_BYTE) return BigInt(super.read_u32())
 		if (d === U64_BYTE) return super.read_u64()
 		if (d === U128_BYTE) return super.read_u128()
-		throw new Error(`invalid discriminant ${d}`)
+		throw `invalid discriminant ${d}`
 	}
 	override read_i16() {
 		let n = this.read_u16()
