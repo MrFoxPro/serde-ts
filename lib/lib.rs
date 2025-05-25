@@ -1,8 +1,9 @@
+// TODO use unfailed write! & writeln! macros as we're writing to String which very rairly can fail without panicking
 #![allow(unused_must_use)]
 
 use serde_generate::{indent::{IndentConfig, IndentedWriter}, CodeGeneratorConfig};
 use serde_reflection::{ContainerFormat, Format, Named, Registry, VariantFormat};
-use std::{collections::BTreeMap, io::{Result, Write}};
+use std::{collections::BTreeMap, io::{Write}};
 use indoc::formatdoc;
 use heck::SnakeCase;
 
@@ -25,7 +26,7 @@ impl<'a> CodeGenerator<'a> {
 	}
 
 	/// Output class definitions for `registry` in a single source file.
-	pub fn output(&self, out: &mut dyn Write, registry: &Registry) -> Result<()> {
+	pub fn output(&self, out: &mut dyn Write, registry: &Registry) {
 		let mut emitter = TypeScriptEmitter {
 			out: IndentedWriter::new(out, IndentConfig::Tab),
 			_generator: self,
@@ -34,17 +35,15 @@ impl<'a> CodeGenerator<'a> {
 		// emitter.output_preamble()?;
 
 		for (name, format) in registry {
-			writeln!(emitter.out)?;
-			emitter.generate_container_typedef(name, format)?;
+			writeln!(emitter.out);
+			emitter.generate_container_typedef(name, format);
 		}
 		if self.config.serialization {
 			for (name, format) in registry {
-				writeln!(emitter.out)?;
-				emitter.generate_container(name, format)?;
+				writeln!(emitter.out);
+				emitter.generate_container(name, format);
 			}
 		}
-
-		Ok(())
 	}
 }
 
@@ -53,92 +52,90 @@ impl<'a, T: Write> TypeScriptEmitter<'a, T> {
 		// Ok(())
 	// }
 
-	fn generate_container(&mut self, name: &str, container: &ContainerFormat) -> Result<()> {
+	fn generate_container(&mut self, name: &str, container: &ContainerFormat) {
 		// Encode
-		writeln!(self.out, "export const {name} = {{")?;
+		writeln!(self.out, "export const {name} = {{");
 		self.out.indent();
 
-		writeln!(self.out, "encode(value: {name}, writer = new BinaryWriter()) {{")?;
+		writeln!(self.out, "encode(value: {name}, writer = new BinaryWriter()) {{");
 		self.out.indent();
 
 		match container {
 			ContainerFormat::UnitStruct => {
-				writeln!(self.out, "{}", self.quote_write_value("null", &Format::Unit))?;
+				writeln!(self.out, "{}", self.quote_write_value("null", &Format::Unit));
 			}
 			ContainerFormat::Struct(fields) => {
 				for field in fields.iter() {
-					writeln!(self.out, "{}", self.quote_write_value(&format!("value.{}", field.name), &field.value))?;
+					writeln!(self.out, "{}", self.quote_write_value(&format!("value.{}", field.name), &field.value));
 				}
 			}
 			ContainerFormat::NewTypeStruct(inner_type) => {
-				writeln!(self.out, "{}", self.quote_write_value(&format!("value"), inner_type))?;
+				writeln!(self.out, "{}", self.quote_write_value(&format!("value"), inner_type));
 			}
 			ContainerFormat::TupleStruct(inner_types) => {
 				for (i, inner) in inner_types.iter().enumerate() {
-					writeln!(self.out, "{}", self.quote_write_value(&format!("value.${i}"), inner))?;
+					writeln!(self.out, "{}", self.quote_write_value(&format!("value.${i}"), inner));
 				}
 			}
 			ContainerFormat::Enum(variants) => {
-				self.generate_enum_container(name, variants)?;
-				return Ok(());
+				self.generate_enum_container(name, variants);
+				return;
 			}
 		}
 
-		writeln!(self.out, "return writer.get_bytes()")?;
+		writeln!(self.out, "return writer.get_bytes()");
 
 		self.out.unindent();
-		writeln!(self.out, "}},")?;
+		writeln!(self.out, "}},");
 
 
 		// Decode
-		writeln!(self.out, "decode(input: Uint8Array, reader = new BinaryReader(input)) {{")?;
+		writeln!(self.out, "decode(input: Uint8Array, reader = new BinaryReader(input)) {{");
 		self.out.indent();
 
 		match container {
 			ContainerFormat::UnitStruct => {
-				writeln!(self.out, "let value: $t.unit = {}", self.quote_read_value(&Format::Unit))?;
+				writeln!(self.out, "let value: $t.unit = {}", self.quote_read_value(&Format::Unit));
 			}
 			ContainerFormat::NewTypeStruct(inner) => {
-				writeln!(self.out, "let value: {name} = {}", self.quote_read_value(inner))?;
+				writeln!(self.out, "let value: {name} = {}", self.quote_read_value(inner));
 			}
 			ContainerFormat::TupleStruct(inner_types) => {
-				writeln!(self.out, "let value: {name} = {{")?;
+				writeln!(self.out, "let value: {name} = {{");
 				self.out.indent();
 				for (i, inner) in inner_types.iter().enumerate() {
-					writeln!(self.out, "${i}: {},", self.quote_read_value(&inner))?;
+					writeln!(self.out, "${i}: {},", self.quote_read_value(&inner));
 				}
 				self.out.unindent();
-				writeln!(self.out, "}}")?;
+				writeln!(self.out, "}}");
 			}
 			ContainerFormat::Struct(fields) => {
-				writeln!(self.out, "let value: {name} = {{")?;
+				writeln!(self.out, "let value: {name} = {{");
 				self.out.indent();
 				for field in fields.iter() {
-					writeln!(self.out, "{}: {},", field.name, self.quote_read_value(&field.value))?;
+					writeln!(self.out, "{}: {},", field.name, self.quote_read_value(&field.value));
 				}
 				self.out.unindent();
-				writeln!(self.out, "}}")?;
+				writeln!(self.out, "}}");
 			},
 			_ => unreachable!(),
 		}
 
-		writeln!(self.out, "return value")?;
+		writeln!(self.out, "return value");
 
 		self.out.unindent();
-		writeln!(self.out, "}}")?; // decode end
+		writeln!(self.out, "}}"); // decode end
 
 		self.out.unindent();
-		writeln!(self.out, "}}")?; // object end
-
-		Ok(())
+		writeln!(self.out, "}}"); // object end
 	}
 
-	fn generate_enum_container(&mut self, name: &str, variants: &BTreeMap<u32, Named<VariantFormat>>) -> Result<()> {
-		writeln!(self.out, "switch (value.$) {{")?;
+	fn generate_enum_container(&mut self, name: &str, variants: &BTreeMap<u32, Named<VariantFormat>>) {
+		writeln!(self.out, "switch (value.$) {{");
 		self.out.indent();
 
 		for (index, variant) in variants {
-			writeln!(self.out, r#"case "{}": {{"#, variant.name.to_snake_case())?;
+			writeln!(self.out, r#"case "{}": {{"#, variant.name.to_snake_case());
 			self.out.indent();
 			writeln!(self.out, "writer.write_variant_index({index})");
 
@@ -155,33 +152,33 @@ impl<'a, T: Write> TypeScriptEmitter<'a, T> {
 				}
 				VariantFormat::Struct(fields) => {
 					for field in fields {
-						writeln!(self.out, "{}", self.quote_write_value(&format!("value.{}", field.name), &field.value))?;
+						writeln!(self.out, "{}", self.quote_write_value(&format!("value.{}", field.name), &field.value));
 					}
 				}
 				VariantFormat::Variable(_) => panic!("not supported")
 			}
-			writeln!(self.out, "break")?;
+			writeln!(self.out, "break");
 			self.out.unindent();
-			writeln!(self.out, "}}")?; // case end
+			writeln!(self.out, "}}"); // case end
 		}
 
 		self.out.unindent();
-		writeln!(self.out, "}}")?; // switch end
+		writeln!(self.out, "}}"); // switch end
 
 		writeln!(self.out, "return writer.get_bytes()");
 		self.out.unindent();
-		writeln!(self.out, "}},")?; // encode end
+		writeln!(self.out, "}},"); // encode end
 
-		writeln!(self.out, "decode(input: Uint8Array, reader = new BinaryReader(input)) {{")?;
+		writeln!(self.out, "decode(input: Uint8Array, reader = new BinaryReader(input)) {{");
 		self.out.indent();
 
 		writeln!(self.out, r#"let value: {name}"#);
 
-		writeln!(self.out, "switch (reader.read_variant_index()) {{")?;
+		writeln!(self.out, "switch (reader.read_variant_index()) {{");
 		self.out.indent();
 
 		for (index, variant) in variants {
-			writeln!(self.out, r#"case {index}: {{"#)?;
+			writeln!(self.out, r#"case {index}: {{"#);
 			self.out.indent();
 
 			writeln!(self.out, r#"value = {{"#);
@@ -203,80 +200,78 @@ impl<'a, T: Write> TypeScriptEmitter<'a, T> {
 				}
 				VariantFormat::Struct(fields) => {
 					for field in fields {
-						writeln!(self.out, "{}: {},", field.name, self.quote_read_value(&field.value))?;
+						writeln!(self.out, "{}: {},", field.name, self.quote_read_value(&field.value));
 					}
 				}
 				VariantFormat::Variable(_) => panic!("not supported")
 			}
 
 			self.out.unindent();
-			writeln!(self.out, r#"}} satisfies Extract<{0}, {{ $: "{1}" }}>"#, name, variant.name.to_snake_case())?;
+			writeln!(self.out, r#"}} satisfies Extract<{0}, {{ $: "{1}" }}>"#, name, variant.name.to_snake_case());
 
-			writeln!(self.out, "break")?;
+			writeln!(self.out, "break");
 			self.out.unindent();
-			writeln!(self.out, "}}")?; // case end
+			writeln!(self.out, "}}"); // case end
 		}
 
 		self.out.unindent();
-		writeln!(self.out, "}}")?; // switch end
+		writeln!(self.out, "}}"); // switch end
 
-		writeln!(self.out)?;
-		writeln!(self.out, "return value")?;
-
-		self.out.unindent();
-		writeln!(self.out, "}}")?; // decode end
+		writeln!(self.out);
+		writeln!(self.out, "return value");
 
 		self.out.unindent();
-		writeln!(self.out, "}}")?; // object end
+		writeln!(self.out, "}}"); // decode end
 
-		Ok(())
+		self.out.unindent();
+		writeln!(self.out, "}}"); // object end
 	}
 
-	fn generate_container_typedef(&mut self, name: &str, container: &ContainerFormat) -> Result<()> {
+	fn generate_container_typedef(&mut self, name: &str, container: &ContainerFormat) {
 		match container {
 			ContainerFormat::UnitStruct => {
-				writeln!(self.out, "export type {name} = $t.unit")?;
+				writeln!(self.out, "export type {name} = $t.unit");
 			}
 			ContainerFormat::TupleStruct(fields) => {
-				writeln!(self.out, "export type {name} = $t.Tuple<[{}]>", self.quote_types(&fields, ", "))?;
+				writeln!(self.out, "export type {name} = $t.Tuple<[{}]>", self.quote_types(&fields, ", "));
 				self.out.unindent();
 			}
 			ContainerFormat::Struct(fields) => {
-				writeln!(self.out, "export type {name} = {{")?;
+				writeln!(self.out, "export type {name} = {{");
 				self.out.indent();
 				for field in fields {
 					match field.value {
 						Format::Unit | Format::Option {..} => {
-							writeln!(self.out, "{}?: {},", field.name, self.quote_type(&field.value))?;
+							writeln!(self.out, "{}?: {},", field.name, self.quote_type(&field.value));
 						}
-						_ => { writeln!(self.out, "{}: {},", field.name, self.quote_type(&field.value))?; }
+						_ => { writeln!(self.out, "{}: {},", field.name, self.quote_type(&field.value)); }
 					}
 				}
 				self.out.unindent();
-				writeln!(self.out, "}}")?;
+				writeln!(self.out, "}}");
 			}
 			ContainerFormat::NewTypeStruct(format) => {
-				writeln!(self.out, "export type {name} = {}", self.quote_type(format))?;
+				writeln!(self.out, "export type {name} = {}", self.quote_type(format));
 			}
 			ContainerFormat::Enum(variants) => {
 				// TODO https://github.com/zefchain/serde-reflection/issues/45
-				writeln!(self.out, "export type {name} = ")?;
+				writeln!(self.out, "export type {name} = ");
 				self.out.indent();
 				for (_index, variant) in variants {
 					let variant_name_snake = variant.name.to_snake_case();
 					match &variant.value {
 						VariantFormat::Unit => {
-							writeln!(self.out, r#"| {{ $: "{0}", $0?: {1} }}"#, variant_name_snake, self.quote_type(&Format::Unit))?;
+							writeln!(self.out, r#"| {{ $: "{0}", $0?: {1} }}"#, variant_name_snake, self.quote_type(&Format::Unit));
 						}
 						VariantFormat::Struct(fields) => {
 							let fields_str = fields.iter().map(|f| format!("{}: {}", f.name, self.quote_type(&f.value))).collect::<Vec<_>>().join(", ");
-							writeln!(self.out, r#"| {{ $: "{0}", {1} }}"#, variant_name_snake, fields_str)?;
+							writeln!(self.out, r#"| {{ $: "{0}", {1} }}"#, variant_name_snake, fields_str);
 						}
 						VariantFormat::NewType(t) => {
-							writeln!(self.out, r#"| {{ $: "{0}", $0: {1} }}"#, variant_name_snake, self.quote_type(&t))?;
+							writeln!(self.out, r#"| {{ $: "{0}", $0: {1} }}"#, variant_name_snake, self.quote_type(&t));
 						}
 						VariantFormat::Tuple(t) => {
-							writeln!(self.out, r#"| {{ $: "{0}" }} & {1}"#, variant_name_snake, self.quote_type(&Format::Tuple(t.clone())))?;
+							writeln!(self.out, r#"| {{ $: "{0}" }} & {1}"#, variant_name_snake, self.quote_type(&Format::Tuple(t.clone())));
 						}
 						VariantFormat::Variable(v) => panic!("unknown variant {v:?} format")
 					}
@@ -286,8 +281,6 @@ impl<'a, T: Write> TypeScriptEmitter<'a, T> {
 			#[allow(unreachable_patterns)]
 			_ => panic!("format not implemented")
 		}
-
-		Ok(())
 	}
 
 	fn quote_qualified_name(&self, name: &str) -> String {

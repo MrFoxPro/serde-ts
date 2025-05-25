@@ -186,7 +186,7 @@ fn print_registry() -> AResult<()> {
 	writeln!(out, r#"import type * as $t from "../../../runtime/serde.ts""#);
 	writeln!(out, r#"import {{ BinaryReader, BinaryWriter }} from "../../../runtime/bincode_v1.ts""#);
 
-	TsCodeGenerator::new(&config).output(&mut out, &registry)?;
+	TsCodeGenerator::new(&config).output(&mut out, &registry);
 
 	let mut out = fs::OpenOptions::new()
 		.create(true).truncate(true).write(true)
@@ -195,7 +195,7 @@ fn print_registry() -> AResult<()> {
 	writeln!(out, r#"import type * as $t from "../../../runtime/serde.ts""#);
 	writeln!(out, r#"import {{ BinaryReader, BinaryWriter }} from "../../../runtime/bincode_v2.ts""#);
 
-	TsCodeGenerator::new(&config).output(&mut out, &registry)?;
+	TsCodeGenerator::new(&config).output(&mut out, &registry);
 
 	Ok(())
 }
