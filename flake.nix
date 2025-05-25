@@ -1,11 +1,11 @@
 {
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs?rev=dad564433178067be1fbdfcce23b546254b6d641";
-
+    nixpkgs.url = "github:cachix/devenv-nixpkgs/rolling";
     flake-parts.url = "github:hercules-ci/flake-parts";
-
-    devenv.url = "github:cachix/devenv?rev=f318d27a4637aff765a378106d82dfded124c3b3"; # https://github.com/cachix/devenv/issues/1513
-    devenv.inputs.nixpkgs.follows = "nixpkgs";
+    devenv = {
+        url = "github:cachix/devenv";
+        inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
   outputs = {self, ...} @ inputs:
     with builtins; let

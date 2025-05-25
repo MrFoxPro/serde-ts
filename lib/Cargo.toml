@@ -9,8 +9,8 @@ path = "lib.rs"
 [dependencies]
 indoc = { version = "2" }
 
-serde-reflection = { git = "https://github.com/mrfoxpro/serde-reflection", branch = "expose-codegen" }
-serde-generate = { git = "https://github.com/mrfoxpro/serde-reflection", branch = "expose-codegen" }
+serde-reflection = { version = "0.5", default-features = false }
+serde-generate = { version = "0.31", default-features = false }
 
 heck = { version = "0.3" }
 textwrap = { version = "0.13" }

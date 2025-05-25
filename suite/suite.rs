@@ -102,7 +102,6 @@ fn print_tests() -> AResult<()> {
 		}"#
 	)?;
 
-
 	let complex_instance = ComplexStruct {
 		inner: None,
 		flag: true,
@@ -110,7 +109,7 @@ fn print_tests() -> AResult<()> {
 		unit: UnitStruct,
 		newtype: NewtypeStruct(-4252345999999643699),
 		tuple: TupleStruct(-123, 45.67 as f64, "🤔".into()),
-		tupple_inline: ("SomeString".into(), 77723485626853535523457346),
+		tupple_inline: ("SomeString".into(), -77723485626853535523457346),
 		map: HashMap::from_iter([(-3, -7)])
 	};
 	add_test(&mut out, &complex_instance,
@@ -124,7 +123,7 @@ fn print_tests() -> AResult<()> {
 			unit: null,
 			newtype: -4252345999999643699n,
 			tuple: { $0: -123, $1: 45.67, $2: "🤔" },
-			tupple_inline: { $0: "SomeString", $1: 77723485626853535523457346n },
+			tupple_inline: { $0: "SomeString", $1: -77723485626853535523457346n },
 			map: new Map().set(-3, -7n),
 		}"#
 	)?;
@@ -163,7 +162,7 @@ struct ComplexStruct {
 	unit: UnitStruct,
 	newtype: NewtypeStruct,
 	tuple: TupleStruct,
-	tupple_inline: (String, u128),
+	tupple_inline: (String, i128),
 	map: HashMap<i32, i64>
 }
 

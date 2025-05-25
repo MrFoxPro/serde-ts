@@ -8,7 +8,7 @@ export type ComplexStruct = {
 	unit: UnitStruct,
 	newtype: NewtypeStruct,
 	tuple: TupleStruct,
-	tupple_inline: $t.Tuple<[$t.str, $t.u128]>,
+	tupple_inline: $t.Tuple<[$t.str, $t.i128]>,
 	map: $t.Map<$t.i32, $t.i64>,
 }
 
@@ -46,7 +46,7 @@ export const ComplexStruct = {
 		NewtypeStruct.encode(value.newtype, writer)
 		TupleStruct.encode(value.tuple, writer)
 		writer.write_string(value.tupple_inline.$0)
-		writer.write_u128(value.tupple_inline.$1)
+		writer.write_i128(value.tupple_inline.$1)
 		writer.write_map(value.map, writer.write_i32.bind(writer), writer.write_i64.bind(writer))
 		return writer.get_bytes()
 	},
@@ -60,7 +60,7 @@ export const ComplexStruct = {
 			tuple: TupleStruct.decode(input, reader),
 			tupple_inline: {
 				$0: reader.read_string(),
-				$1: reader.read_u128(),
+				$1: reader.read_i128(),
 			},
 			map: reader.read_map<$t.i32, $t.i64>(reader.read_i32.bind(reader), reader.read_i64.bind(reader)),
 		}

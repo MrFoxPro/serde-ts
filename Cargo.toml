@@ -11,8 +11,8 @@ path = "./suite/suite.rs"
 name = "suite"
 
 [dependencies]
-serde-reflection = { git = "https://github.com/mrfoxpro/serde-reflection", branch = "expose-codegen" }
-serde-generate = { git = "https://github.com/mrfoxpro/serde-reflection", branch = "expose-codegen" }
+serde-reflection = { version = "0.5", default-features = false }
+serde-generate = { version = "0.31", default-features = false }
 serde-generate-ts = { path = "./lib" }
 bincode = { version = "2" }
 serde = { version = "1" }

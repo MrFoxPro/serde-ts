@@ -15,7 +15,7 @@ pub struct CodeGenerator<'a> {
 /// Shared state for the code generation of a TypeScript source file.
 struct TypeScriptEmitter<'a, T> {
 	out: IndentedWriter<T>,
-	generator: &'a CodeGenerator<'a>,
+	_generator: &'a CodeGenerator<'a>,
 }
 
 impl<'a> CodeGenerator<'a> {
@@ -28,7 +28,7 @@ impl<'a> CodeGenerator<'a> {
 	pub fn output(&self, out: &mut dyn Write, registry: &Registry) -> Result<()> {
 		let mut emitter = TypeScriptEmitter {
 			out: IndentedWriter::new(out, IndentConfig::Tab),
-			generator: self,
+			_generator: self,
 		};
 
 		// emitter.output_preamble()?;
@@ -49,9 +49,9 @@ impl<'a> CodeGenerator<'a> {
 }
 
 impl<'a, T: Write> TypeScriptEmitter<'a, T> {
-	fn output_preamble(&mut self) -> Result<()> {
-		Ok(())
-	}
+	// fn output_preamble(&mut self) -> Result<()> {
+		// Ok(())
+	// }
 
 	fn generate_container(&mut self, name: &str, container: &ContainerFormat) -> Result<()> {
 		// Encode
